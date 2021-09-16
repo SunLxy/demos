@@ -23,6 +23,39 @@ jobs:
           cd android
           echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
           bash gradlew assembleRelease
+    - name: Create Tag
+      id: create_tag
+      uses: jaywcjlove/create-tag-action@v1.2.0
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        package-path: ./package.json
+        
+    - name: Generate changelog
+      id: changelog
+      uses: jaywcjlove/changelog-generator@v1.4.3
+      if: steps.create_tag.outputs.successful
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        head-ref: ${{steps.create_tag.outputs.version}}
+        filter-author: (SunLxy|dependabot\[bot\]|Renovate Bot)
+        filter: '[R|r]elease[d]\s+[v|V]\d(\.\d+){0,2}'
+
+    - name: Create Release
+      uses: ncipollo/release-action@v1
+      if: steps.create_tag.outputs.successful
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        name: ${{ steps.create_tag.outputs.version }}
+        tag: ${{ steps.create_tag.outputs.version }}
+        body: |
+          ```
+          ${{ steps.changelog.outputs.compareurl }}
+          ${{ steps.changelog.outputs.changelog }}
+    
+    - uses: AButler/upload-release-assets@v2.0
+      with:
+          files: 'android/app/build/outputs/apk/release/app-release.apk'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
 #     - name: Grant execute permission for gradlew
 #       run: chmod +x gradlew
