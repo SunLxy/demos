@@ -40,17 +40,17 @@ jobs:
         filter-author: (SunLxy|dependabot\[bot\]|Renovate Bot)
         filter: '[R|r]elease[d]\s+[v|V]\d(\.\d+){0,2}'
 
-#     - name: Create Release
-#       uses: ncipollo/release-action@v1
-#       if: steps.create_tag.outputs.successful
-#       with:
-#         token: ${{ secrets.GITHUB_TOKEN }}
-#         name: ${{ steps.create_tag.outputs.version }}
-#         tag: ${{ steps.create_tag.outputs.version }}
-#         body: |
-#           ```
-#           ${{ steps.changelog.outputs.compareurl }}
-#           ${{ steps.changelog.outputs.changelog }}
+    - name: Create Release
+      uses: ncipollo/release-action@v1
+      if: steps.create_tag.outputs.successful
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        name: ${{ steps.create_tag.outputs.version }}
+        tag: ${{ steps.create_tag.outputs.version }}
+        body: |
+          ```
+          ${{ steps.changelog.outputs.compareurl }}
+          ${{ steps.changelog.outputs.changelog }}
           
     - name: Upload Release Asset
       id: upload-release-asset 
