@@ -16,19 +16,22 @@ jobs:
       with:
         java-version: 1.8
         
-    - run: npm install
-    
-    - name: Build release apk
-      run: |
-          cd android
-          echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
-          bash gradlew assembleRelease
     - name: Create Tag
       id: create_tag
       uses: jaywcjlove/create-tag-action@v1.2.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        package-path: ./package.json
+        package-path: ./package.json   
+    - run: echo  ${{ steps.create_tag.outputs.preversionNumber }}   
+    - name: install
+      if: steps.create_tag.outputs.successful
+      run: npm install
+    - name: Build release apk
+      if: steps.create_tag.outputs.successful
+      run: |
+          cd android
+          echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+          bash gradlew assembleRelease
         
     - name: Generate changelog
       id: changelog
@@ -52,8 +55,7 @@ jobs:
           ```
           ${{ steps.changelog.outputs.compareurl }}
           ${{ steps.changelog.outputs.changelog }}
-    - run: echo  ${{ steps.create_tag.outputs.preversionNumber }}   
-    - run: echo ${{ steps.changelog.outputs.tag }}   
+   
     - name: Upload Release Asset
       id: upload-release-asset 
       uses: actions/upload-release-asset@v1
