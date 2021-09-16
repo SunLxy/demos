@@ -22,7 +22,7 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         package-path: ./package.json   
-    - run: echo  ${{ steps.create_tag.outputs.preversionNumber }}   
+    - run: echo  ${{ steps.create_tag.outputs.versionNumber }}   
     - name: install
       if: steps.create_tag.outputs.successful
       run: npm install
