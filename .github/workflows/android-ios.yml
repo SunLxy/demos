@@ -1,4 +1,4 @@
-name: Android CI
+name: Android CI And IOS CI
 
 on:
   push:
@@ -24,15 +24,26 @@ jobs:
         package-path: ./package.json   
         
     - name: install
-      if: steps.create_tag.outputs.successful
+      # if: steps.create_tag.outputs.successful
       run: npm install
-    - name: Build release apk
+
+    - name: Build Android
       if: steps.create_tag.outputs.successful
       run: |
           cd android
           echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
           bash gradlew assembleRelease
-        
+
+    - name: Build IOS
+      # if: steps.create_tag.outputs.successful
+      run: |
+        cd android
+        pod install
+        xcodebuild clean
+        xcodebuild -workspace demos.xcworkspace -scheme demos -archivePath ./demos.xcarchive -configuration Debug archive
+        xcodebuild -exportArchive -archivePath ./demos.xcarchive -exportPath ../buildIms -exportOptionsPlist ./demos/Info.plist
+
+
     - name: Generate changelog
       id: changelog
       uses: jaywcjlove/changelog-generator@v1.4.3
@@ -55,7 +66,7 @@ jobs:
           ```
           ${{ steps.changelog.outputs.compareurl }}
           ${{ steps.changelog.outputs.changelog }}
-   
+
     - name: Upload Release Asset
       id: upload-release-asset 
       if: steps.create_tag.outputs.successful
