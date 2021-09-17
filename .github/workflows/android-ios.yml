@@ -37,7 +37,7 @@ jobs:
     - name: Build IOS
       # if: steps.create_tag.outputs.successful
       run: |
-        cd android
+        cd ios
         pod install
         xcodebuild clean
         xcodebuild -workspace demos.xcworkspace -scheme demos -archivePath ./demos.xcarchive -configuration Debug archive
