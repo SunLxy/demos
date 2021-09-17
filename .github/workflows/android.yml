@@ -1,0 +1,78 @@
+name: Android CI
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: set up JDK 1.8
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+        
+    - name: Create Tag
+      id: create_tag
+      uses: jaywcjlove/create-tag-action@v1.2.0
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        package-path: ./package.json   
+    - run: echo  ${{ steps.create_tag.outputs.versionNumber }}   
+    - name: install
+      if: steps.create_tag.outputs.successful
+      run: npm install
+    - name: Build release apk
+      if: steps.create_tag.outputs.successful
+      run: |
+          cd android
+          echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+          bash gradlew assembleRelease
+        
+    - name: Generate changelog
+      id: changelog
+      uses: jaywcjlove/changelog-generator@v1.4.3
+      if: steps.create_tag.outputs.successful
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        head-ref: ${{steps.create_tag.outputs.version}}
+        filter-author: (SunLxy|dependabot\[bot\]|Renovate Bot)
+        filter: '[R|r]elease[d]\s+[v|V]\d(\.\d+){0,2}'
+
+    - name: Create Release
+      id: create_release
+      uses: ncipollo/release-action@v1
+      if: steps.create_tag.outputs.successful
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        name: ${{ steps.create_tag.outputs.version }}
+        tag: ${{ steps.create_tag.outputs.version }}
+        body: |
+          ```
+          ${{ steps.changelog.outputs.compareurl }}
+          ${{ steps.changelog.outputs.changelog }}
+   
+    - name: Upload Release Asset
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ./android/app/build/outputs/apk/release/app-release.apk
+          asset_name: app-${{ steps.create_tag.outputs.preversionNumber }}.apk
+          asset_content_type: application/vnd.android.package-archive
+    
+#     - uses: AButler/upload-release-assets@v2.0
+#       with:
+#           files: 'android/app/build/outputs/apk/release/app-release.apk'
+#           repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+#     - name: Grant execute permission for gradlew
+#       run: chmod +x gradlew
+#     - name: Build with Gradle
+#       run: cd android ./gradlew build
