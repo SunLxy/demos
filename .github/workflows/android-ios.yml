@@ -34,11 +34,12 @@ jobs:
           echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
           bash gradlew assembleRelease
 
+    - run: xcode-select -p
+    
     - name: Build IOS
       # if: steps.create_tag.outputs.successful
       run: |
         cd ios
-        xcode-select -p
         pod install
         xcodebuild clean
         xcodebuild -workspace demos.xcworkspace -scheme demos -archivePath ./demos.xcarchive -configuration Debug archive
