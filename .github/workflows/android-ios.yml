@@ -29,7 +29,7 @@ jobs:
         package-path: ./package.json   
         
     - name: install
-      # if: steps.create_tag.outputs.successful
+      if: steps.create_tag.outputs.successful
       run: npm install
 
     - name: Build Android
@@ -39,15 +39,15 @@ jobs:
           echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
           bash gradlew assembleRelease
 
-      - name: Build IOS
-        # if: steps.create_tag.outputs.successful
-        run: |
-          xcode-select -p
-          cd ios
-          pod install
-          xcodebuild clean
-          xcodebuild -workspace ./demos.xcworkspace -scheme demos -archivePath ./demos.xcarchive -configuration Debug archive
-          xcodebuild -exportArchive -archivePath ./demos.xcarchive -exportPath ../buildIms -exportOptionsPlist ./demos/Info.plist
+    # - name: Build IOS
+    #   if: steps.create_tag.outputs.successful
+    #   run: |
+    #       xcode-select -p
+    #       cd ios
+    #       pod install
+    #       xcodebuild clean
+    #       xcodebuild -workspace ./demos.xcworkspace -scheme demos -archivePath ./demos.xcarchive -configuration Debug archive
+    #       xcodebuild -exportArchive -archivePath ./demos.xcarchive -exportPath ../buildIms -exportOptionsPlist ./demos/Info.plist
     
     - name: Generate changelog
       id: changelog
@@ -84,14 +84,14 @@ jobs:
           asset_name: app-${{ steps.create_tag.outputs.versionNumber }}.apk
           asset_content_type: application/vnd.android.package-archive
 
-      - name: Upload Release Asset
-        id: upload-release-asset
-        if: steps.create_tag.outputs.successful
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: ./buildIms/demos.ipa
-          asset_name: demos.ipa
-          asset_content_type: application/vnd.ios.package-archive
+      # - name: Upload Release Asset
+      #   id: upload-release-asset
+      #   if: steps.create_tag.outputs.successful
+      #   uses: actions/upload-release-asset@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+      #     asset_path: ./buildIms/demos.ipa
+      #     asset_name: demos.ipa
+      #     asset_content_type: application/vnd.ios.package-archive
