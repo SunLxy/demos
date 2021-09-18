@@ -75,7 +75,7 @@ jobs:
       - name: Create Release
         id: create_release
         uses: ncipollo/release-action@v1
-        if: steps.create_tag.outputs.successful
+        if: needs.build_android.outputs.successful
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           name: ${{ needs.build_android.outputs.version }}
