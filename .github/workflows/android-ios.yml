@@ -35,7 +35,12 @@ jobs:
             cd android
             echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
             bash gradlew assembleRelease
-    
+
+      - name: Upload android apk
+        uses: actions/upload-artifact@v2
+        with:
+          name: android_apk
+          path: ./android/app/build/outputs/apk/release/app-release.apk
       
   # build_ios:
   #   needs: build
@@ -62,6 +67,12 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build_android]
     steps:
+
+      - name: Download android apk
+        uses: actions/download-artifact@v2
+        with:
+          name: android_apk
+
       - name: Generate changelog
         id: changelog
         uses: jaywcjlove/changelog-generator@v1.4.3
